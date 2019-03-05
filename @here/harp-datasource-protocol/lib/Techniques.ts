@@ -4,8 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { MathUtils } from "@here/harp-geoutils";
 import * as THREE from "three";
+import { MaybeInterpolatedProperty } from "./Theme";
 
 /**
  * Possible techniques that can be used to draw a geometry on the map.
@@ -94,12 +94,7 @@ export interface BaseTechnique {
 /**
  * The technique to keep a style description without triggering a decoding for it.
  */
-export interface NoneTechnique extends BaseTechnique {
-    /**
-     * Name of technique. Is used in the theme file.
-     */
-    name: "none";
-}
+export type NoneTechnique = BaseTechnique;
 
 /**
  * Standard technique to draw a geometry.
@@ -181,10 +176,6 @@ export interface BaseStandardTechnique extends BaseTechnique {
 
 export interface SquaresTechnique extends BaseTechnique {
     /**
-     * Name of technique. Is used in the theme file.
-     */
-    name: "squares";
-    /**
      * Color of a point in hexadecimal or CSS-style notation, for example: `"#e4e9ec"`, `"#fff"`,
      * `"rgb(255, 0, 0)"`, or `"hsl(35, 11%, 88%)"`.
      */
@@ -214,10 +205,6 @@ export interface SquaresTechnique extends BaseTechnique {
 }
 
 export interface CirclesTechnique extends BaseTechnique {
-    /**
-     * Name of technique. Is used in the theme file.
-     */
-    name: "circles";
     /**
      * Color of a point in hexadecimal or CSS-style notation, for example: `"#e4e9ec"`, `"#fff"`,
      * `"rgb(255, 0, 0)"`, or `"hsl(35, 11%, 88%)"`.
@@ -493,19 +480,12 @@ export interface MarkerTechnique extends BaseTechnique {
 /**
  * Declares a geometry as a point of interest (POI).
  */
-export interface PoiTechnique extends MarkerTechnique {
-    /**
-     * Name of technique. Is used in the theme file.
-     */
-    name: "labeled-icon";
-}
+export type PoiTechnique = MarkerTechnique;
 
 /**
  * Declares a geometry as a line marker.
  */
 export interface LineMarkerTechnique extends MarkerTechnique {
-    name: "line-marker";
-
     /**
      * Minimal distance between markers in screen pixels.
      */
@@ -516,10 +496,6 @@ export interface LineMarkerTechnique extends MarkerTechnique {
  * Declares a geometry as a line.
  */
 export interface LineTechnique extends BaseTechnique {
-    /**
-     * Name of technique. Is used in the theme file.
-     */
-    name: "line";
     /**
      * Color of a line in hexadecimal or CSS-style notation, for example: `"#e4e9ec"`, `"#fff"`,
      * `"rgb(255, 0, 0)"`, or `"hsl(35, 11%, 88%)"`.
@@ -539,17 +515,13 @@ export interface LineTechnique extends BaseTechnique {
      * Width of line in pixels. WebGL implementations will normally render all lines with 1 pixel
      * width, and ignore this value.
      */
-    lineWidth: number;
+    lineWidth: MaybeInterpolatedProperty<number>;
 }
 
 /**
  * Declares a geometry as a segment.
  */
 export interface SegmentsTechnique extends BaseTechnique {
-    /**
-     * Name of technique. Is used in the theme file.
-     */
-    name: "segments";
     /**
      * Color of segments in a hexadecimal notation, for example: `"#e4e9ec"` or `"#fff"`.
      */
@@ -567,7 +539,7 @@ export interface SegmentsTechnique extends BaseTechnique {
     /**
      * Width of a line in meters.
      */
-    lineWidth: number;
+    lineWidth: MaybeInterpolatedProperty<number>;
 }
 
 /**
@@ -628,17 +600,13 @@ export interface PolygonalTechnique {
  */
 export interface BasicExtrudedLineTechnique extends BaseTechnique, PolygonalTechnique {
     /**
-     * Name of technique. Is used in the theme file.
-     */
-    name: "extruded-line";
-    /**
      * A value determining the shading technique. Valid values are "Basic" and "Standard". Default
      * is "Basic".
      *
-     * `"Basic"`   : Simple shading, faster to render. Only simple color and opacity are effective.
-     * `"Standard"`: Elaborate shading, with metalness, and roughness.
+     * `"basic"`   : Simple shading, faster to render. Only simple color and opacity are effective.
+     * `"standard"`: Elaborate shading, with metalness, and roughness.
      */
-    shading?: "Basic";
+    shading?: "basic";
     /**
      * Color of a line in hexadecimal or CSS-style notation, for example: `"#e4e9ec"`, `"#fff"`,
      * `"rgb(255, 0, 0)"`, or `"hsl(35, 11%, 88%)"`.
@@ -657,7 +625,7 @@ export interface BasicExtrudedLineTechnique extends BaseTechnique, PolygonalTech
     /**
      * Width of line in meters for different zoom levels.
      */
-    lineWidth: number;
+    lineWidth: MaybeInterpolatedProperty<number>;
     /**
      * A value of `true` creates a wireframe geometry. (May not be supported with all techniques).
      */
@@ -666,17 +634,13 @@ export interface BasicExtrudedLineTechnique extends BaseTechnique, PolygonalTech
      * Style of both end caps. Possible values: `"None"`, `"Circle"`. A value of undefined maps to
      * `"Circle"`.
      */
-    caps?: string;
+    caps?: "None" | "Circle";
 }
 
 /**
  * Declares a a geometry as a standard extruded line.
  */
 export interface StandardExtrudedLineTechnique extends BaseStandardTechnique, PolygonalTechnique {
-    /**
-     * Name of technique. Is used in the theme file.
-     */
-    name: "extruded-line";
     /**
      * A value determining the shading technique. Valid values are `"basic"` and `"standard"`.
      * Default is `"basic"`.
@@ -688,22 +652,18 @@ export interface StandardExtrudedLineTechnique extends BaseStandardTechnique, Po
     /**
      * Width of a line in meters for different zoom levels.
      */
-    lineWidth: number;
+    lineWidth: MaybeInterpolatedProperty<number>;
     /**
      * Style of both end caps. Possible values: `"None"`, `"Circle"`. A value of undefined maps to
      * `"Circle"`.
      */
-    caps?: string;
+    caps?: "None" | "Circle";
 }
 
 /**
  * Declares a a geometry as a solid line.
  */
 export interface SolidLineTechnique extends BaseTechnique, PolygonalTechnique {
-    /**
-     * Name of technique. Is used in the theme file.
-     */
-    name: "solid-line";
     /**
      * Color of a line in hexadecimal or CSS-style notation, for example: `"#e4e9ec"`, `"#fff"`,
      * `"rgb(255, 0, 0)"`, or `"hsl(35, 11%, 88%)"`.
@@ -727,7 +687,7 @@ export interface SolidLineTechnique extends BaseTechnique, PolygonalTechnique {
     /**
      * Width of a line in `metricUnit`s for different zoom levels.
      */
-    lineWidth: number;
+    lineWidth: MaybeInterpolatedProperty<number>;
     /**
      * Clip the line outside the tile if `true`.
      */
@@ -752,10 +712,6 @@ export interface SolidLineTechnique extends BaseTechnique, PolygonalTechnique {
  */
 export interface DashedLineTechnique extends BaseTechnique, PolygonalTechnique {
     /**
-     * Name of technique. Is used in the theme file.
-     */
-    name: "dashed-line";
-    /**
      * Color of a line in hexadecimal or CSS-style notation, for example: `"#e4e9ec"`, `"#fff"`,
      * `"rgb(255, 0, 0)"`, or `"hsl(35, 11%, 88%)"`.
      */
@@ -774,19 +730,19 @@ export interface DashedLineTechnique extends BaseTechnique, PolygonalTechnique {
     /**
      * Units in which different size properties are specified. Either `Meter` (default) or `Pixel`.
      */
-    metricUnit?: string;
+    metricUnit?: "Meter" | "Pixel";
     /**
      * Width of a line in `metricUnit`s for different zoom levels.
      */
-    lineWidth: number;
+    lineWidth: MaybeInterpolatedProperty<number>;
     /**
      * Length of a line in meters for different zoom levels.
      */
-    dashSize?: number;
+    dashSize?: MaybeInterpolatedProperty<number>;
     /**
      * Size of a gap between lines in meters for different zoom levels.
      */
-    gapSize?: number;
+    gapSize?: MaybeInterpolatedProperty<number>;
     /**
      * Clip the line outside the tile if `true`.
      */
@@ -797,10 +753,6 @@ export interface DashedLineTechnique extends BaseTechnique, PolygonalTechnique {
  * Technique used to draw filled polygons.
  */
 export interface FillTechnique extends BaseTechnique, PolygonalTechnique {
-    /**
-     * Name of technique. Is used in the theme file.
-     */
-    name: "fill";
     /**
      * Fill color in hexadecimal or CSS-style notation, for example: `"#e4e9ec"`, `"#fff"`,
      * `"rgb(255, 0, 0)"`, or `"hsl(35, 11%, 88%)"`.
@@ -831,10 +783,6 @@ export interface FillTechnique extends BaseTechnique, PolygonalTechnique {
  */
 export interface ExtrudedPolygonTechnique extends BaseStandardTechnique {
     /**
-     * Name of technique. Is used in the theme file.
-     */
-    name: "extruded-polygon";
-    /**
      * Derived property that has first priority in use for rendering.
      * In case property is absent class will try to get color from the [[MapEnv]].
      */
@@ -851,7 +799,7 @@ export interface ExtrudedPolygonTechnique extends BaseStandardTechnique {
     /**
      * Width of the lines. Currently limited to the [0, 1] range.
      */
-    lineWidth?: number;
+    lineWidth: MaybeInterpolatedProperty<number>;
     /**
      * Fill color in hexadecimal or CSS-style notation, for example: `"#e4e9ec"`, `"#fff"`,
      * `"rgb(255, 0, 0)"`, or `"hsl(35, 11%, 88%)"`.
@@ -903,11 +851,10 @@ export interface ExtrudedPolygonTechnique extends BaseStandardTechnique {
 /**
  * Technique used to render a mesh geometry.
  */
-export interface StandardTechnique extends BaseStandardTechnique {
-    /**
-     * Name of technique. Is used in the theme file.
-     */
-    name: "standard";
+export type StandardTechnique = BaseStandardTechnique;
+
+export interface ShaderTechniqueParameters {
+    [name: string]: any;
 }
 
 /**
@@ -916,13 +863,10 @@ export interface StandardTechnique extends BaseStandardTechnique {
  */
 export interface ShaderTechnique extends BaseTechnique {
     /**
-     * Name of technique. Is used in the theme file.
-     */
-    name: "shader";
-    /**
      * Parameters for shader. See `THREE.ShaderMaterialParameters`.
      */
-    params: THREE.ShaderMaterialParameters;
+    params: ShaderTechniqueParameters;
+
     /**
      * Type of primitive for the shader technique. Valid values are "point" | "line" | "segments" |
      * "mesh"
@@ -931,9 +875,7 @@ export interface ShaderTechnique extends BaseTechnique {
 }
 
 // deprecated, same as StandardTechnique left for backwards compatibility
-export interface LandmarkTechnique extends BaseStandardTechnique {
-    name: "landmark";
-}
+export type LandmarkTechnique = BaseStandardTechnique;
 
 /**
  * Technique used to render a geometry with a texture.
@@ -941,8 +883,6 @@ export interface LandmarkTechnique extends BaseStandardTechnique {
  * local tile space (i.e. [0,0] at south-west and [1,1] at noth-east tile corner )
  */
 export interface StandardTexturedTechnique extends BaseStandardTechnique {
-    name: "standard-textured";
-
     /**
      * Render texture if available.
      *
@@ -978,10 +918,6 @@ export interface StandardTexturedTechnique extends BaseStandardTechnique {
  */
 export interface TextTechnique extends BaseTechnique {
     /**
-     * Name of technique. Is used in the theme file.
-     */
-    name: "text";
-    /**
      * Field name of object containing the text to be rendered.
      */
     label?: string;
@@ -994,6 +930,11 @@ export interface TextTechnique extends BaseTechnique {
      * The `iso_code` field contains the ISO 3166-1 2-letter country code.
      */
     useIsoCode?: boolean;
+    /**
+     * For transparent text, set a value between 0.0 for totally transparent, to 1.0 for totally
+     * opaque.
+     */
+    opacity?: number;
     /**
      * Text color in hexadecimal or CSS-style notation, for example: `"#e4e9ec"`, `"#fff"`,
      * `"rgb(255, 0, 0)"`, or `"hsl(35, 11%, 88%)"`.
@@ -1015,11 +956,11 @@ export interface TextTechnique extends BaseTechnique {
     /**
      * Size of the text (pixels).
      */
-    size?: number;
+    size?: MaybeInterpolatedProperty<number>;
     /**
      * Size of the text background (pixels).
      */
-    backgroundSize?: number;
+    backgroundSize?: MaybeInterpolatedProperty<number>;
     /**
      * Scaling factor of the text. Defaults to 0.5, reducing the size ot 50% in the distance.
      */
@@ -1043,11 +984,11 @@ export interface TextTechnique extends BaseTechnique {
     /**
      * Horizontal alignment on a text line. Either `Left`, `Center` or `Right`.
      */
-    hAlignment?: string;
+    hAlignment?: "Left" | "Center" | "Right";
     /**
      * Vertical alignment on a text line. Either `Above`, `Center` or `Below`.
      */
-    vAlignment?: string;
+    vAlignment?: "Above" | "Center" | "Below";
     /**
      * Horizontal separation between glyphs.
      */
@@ -1087,61 +1028,115 @@ export interface TextTechnique extends BaseTechnique {
      * Fading time for labels in seconds.
      */
     textFadeTime?: number;
+    /**
+     * Clip the line outside the tile if `true`.
+     */
+    clipping?: boolean;
+    /**
+     * The name of the property containing the text.
+     */
+    textLabel?: string;
+}
+
+export interface TechniqueId {
+    name:
+        | "none"
+        | "circles"
+        | "squares"
+        | "labeled-icon"
+        | "line-marker"
+        | "dashed-line"
+        | "line"
+        | "solid-line"
+        | "segments"
+        | "extruded-line"
+        | "fill"
+        | "extruded-polygon"
+        | "standard"
+        | "standard-textured"
+        | "landmark"
+        | "text"
+        | "shader";
 }
 
 /**
  * Type guard to check if an object is an instance of [[CirclesTechnique]].
  */
-export function isCirclesTechnique(technique: Technique): technique is CirclesTechnique {
+export function isNoneTechnique(
+    technique: Technique & Partial<TechniqueId>
+): technique is CirclesTechnique {
+    return technique.name === "none" || technique.name === undefined;
+}
+
+/**
+ * Type guard to check if an object is an instance of [[CirclesTechnique]].
+ */
+export function isCirclesTechnique(
+    technique: Technique & Partial<TechniqueId>
+): technique is CirclesTechnique {
     return technique.name === "circles";
 }
 
 /**
  * Type guard to check if an object is an instance of [[SquaresTechnique]].
  */
-export function isSquaresTechnique(technique: Technique): technique is SquaresTechnique {
+export function isSquaresTechnique(
+    technique: Technique & Partial<TechniqueId>
+): technique is SquaresTechnique {
     return technique.name === "squares";
 }
 
 /**
  * Type guard to check if an object is an instance of [[PoiTechnique]].
  */
-export function isPoiTechnique(technique: Technique): technique is PoiTechnique {
+export function isPoiTechnique(
+    technique: Technique & Partial<TechniqueId>
+): technique is PoiTechnique {
     return technique.name === "labeled-icon";
 }
 
 /**
  * Type guard to check if an object is an instance of [[LineMarkerTechnique]].
  */
-export function isLineMarkerTechnique(technique: Technique): technique is LineMarkerTechnique {
+export function isLineMarkerTechnique(
+    technique: Technique & Partial<TechniqueId>
+): technique is LineMarkerTechnique {
     return technique.name === "line-marker";
 }
 
 /**
  * Type guard to check if an object is an instance of [[DashedLineTechnique]].
  */
-export function isDashedLineTechnique(technique: Technique): technique is DashedLineTechnique {
+export function isDashedLineTechnique(
+    technique: Technique & Partial<TechniqueId>
+): technique is DashedLineTechnique {
     return technique.name === "dashed-line";
 }
 
 /**
  * Type guard to check if an object is an instance of [[LineTechnique]].
  */
-export function isLineTechnique(technique: Technique): technique is LineTechnique {
+export function isLineTechnique(
+    technique: Technique & Partial<TechniqueId>
+): technique is LineTechnique {
     return technique.name === "line";
 }
 
 /**
  * Type guard to check if an object is an instance of [[SolidLineTechnique]].
  */
-export function isSolidLineTechnique(technique: Technique): technique is SolidLineTechnique {
+export function isSolidLineTechnique(
+    technique: Technique & Partial<TechniqueId>
+): technique is SolidLineTechnique {
     return technique.name === "solid-line";
 }
 
 /**
  * Type guard to check if an object is an instance of [[SegmentsTechnique]].
  */
-export function isSegmentsTechnique(technique: Technique): technique is SegmentsTechnique {
+export function isSegmentsTechnique(
+    technique: Technique & Partial<TechniqueId>
+): technique is SegmentsTechnique {
     return technique.name === "segments";
 }
 
@@ -1150,7 +1145,7 @@ export function isSegmentsTechnique(technique: Technique): technique is Segments
  * or [[StandardExtrudedLineTechnique]].
  */
 export function isExtrudedLineTechnique(
-    technique: Technique
+    technique: Technique & Partial<TechniqueId>
 ): technique is BasicExtrudedLineTechnique | StandardExtrudedLineTechnique {
     return technique.name === "extruded-line";
 }
@@ -1158,7 +1153,9 @@ export function isExtrudedLineTechnique(
 /**
  * Type guard to check if an object is an instance of [[FillTechnique]].
  */
-export function isFillTechnique(technique: Technique): technique is FillTechnique {
+export function isFillTechnique(
+    technique: Technique & Partial<TechniqueId>
+): technique is FillTechnique {
     return technique.name === "fill";
 }
 
@@ -1166,7 +1163,7 @@ export function isFillTechnique(technique: Technique): technique is FillTechniqu
  * Type guard to check if an object is an instance of [[ExtrudedPolygonTechnique]].
  */
 export function isExtrudedPolygonTechnique(
-    technique: Technique
+    technique: Technique & Partial<TechniqueId>
 ): technique is ExtrudedPolygonTechnique {
     return technique.name === "extruded-polygon";
 }
@@ -1174,7 +1171,9 @@ export function isExtrudedPolygonTechnique(
 /**
  * Type guard to check if an object is an instance of [[StandardTechnique]].
  */
-export function isStandardTechnique(technique: Technique): technique is StandardTechnique {
+export function isStandardTechnique(
+    technique: Technique & Partial<TechniqueId>
+): technique is StandardTechnique {
     return technique.name === "standard";
 }
 
@@ -1182,7 +1181,7 @@ export function isStandardTechnique(technique: Technique): technique is Standard
  * Type guard to check if an object is an instance of [[StandardTexturedTechnique]].
  */
 export function isStandardTexturedTechnique(
-    technique: Technique
+    technique: Technique & Partial<TechniqueId>
 ): technique is StandardTexturedTechnique {
     return technique.name === "standard-textured";
 }
@@ -1190,21 +1189,27 @@ export function isStandardTexturedTechnique(
 /**
  * Type guard to check if an object is an instance of [[LandmarkTechnique]].
  */
-export function isLandmarkTechnique(technique: Technique): technique is LandmarkTechnique {
+export function isLandmarkTechnique(
+    technique: Technique & Partial<TechniqueId>
+): technique is LandmarkTechnique {
     return technique.name === "landmark";
 }
 
 /**
  * Type guard to check if an object is an instance of [[TextTechnique]].
  */
-export function isTextTechnique(technique: Technique): technique is TextTechnique {
+export function isTextTechnique(
+    technique: Technique & Partial<TechniqueId>
+): technique is TextTechnique {
     return technique.name === "text";
 }
 
 /**
  * Type guard to check if an object is an instance of [[ShaderTechnique]].
  */
-export function isShaderTechnique(technique: Technique): technique is ShaderTechnique {
+export function isShaderTechnique(
+    technique: Technique & Partial<TechniqueId>
+): technique is ShaderTechnique {
     return technique.name === "shader";
 }
 
@@ -1246,8 +1251,6 @@ export interface DataTextureProperties {
     format?: PixelFormat;
     type?: TextureDataType;
 }
-
-const interpolants = [THREE.DiscreteInterpolant, THREE.LinearInterpolant, THREE.CubicInterpolant];
 
 /**
  * Interpolation mode used when computing a [[InterpolatedProperty]] value for a given zoom level.
@@ -1293,41 +1296,6 @@ export function isInterpolatedProperty<T>(p: any): p is InterpolatedProperty<T> 
         return true;
     }
     return false;
-}
-
-/**
- * Get the value of the specified property at the given zoom level. Handles [[InterpolatedProperty]]
- * instances as well as future interpolated values.
- *
- * @param property Property of a technique.
- * @param level Display level the property should be rendered at.
- */
-export function getPropertyValue<T>(
-    property: InterpolatedProperty<T> | T,
-    level: number
-): T | undefined {
-    if (!isInterpolatedProperty(property)) {
-        return property;
-    } else {
-        const nChannels = property.values.length / property.zoomLevels.length;
-        const isMultiChannel = nChannels > 1;
-        const interpolant = new interpolants[property.interpolationMode](
-            property.zoomLevels,
-            property.values,
-            nChannels
-        );
-        interpolant.evaluate(level);
-        let result = isMultiChannel ? "#" : 0;
-        // tslint:disable:no-bitwise
-        for (const value of interpolant.resultBuffer) {
-            const val = isMultiChannel
-                ? ("0" + ((MathUtils.clamp(value, 0, 1) * 255) | 0).toString(16)).slice(-2)
-                : value;
-            result += val;
-        }
-        // tslint:disable:bitwise
-        return (result as unknown) as T;
-    }
 }
 
 export type PixelFormat =

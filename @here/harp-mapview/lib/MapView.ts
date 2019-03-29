@@ -3,7 +3,14 @@
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
-import { createLight, ImageTexture, Light, Sky, Theme } from "@here/harp-datasource-protocol";
+import {
+    createLight,
+    ImageTexture,
+    Light,
+    Sky,
+    Theme,
+    PolygonFeatureGroup
+} from "@here/harp-datasource-protocol";
 import { GeoCoordinates, MathUtils, mercatorProjection, Projection } from "@here/harp-geoutils";
 import { assert, LoggerManager, PerformanceTimer } from "@here/harp-utils";
 import * as THREE from "three";
@@ -29,6 +36,7 @@ import { ThemeLoader } from "./ThemeLoader";
 import { Tile } from "./Tile";
 import { MapViewUtils } from "./Utils";
 import { ResourceComputationType, VisibleTileSet, VisibleTileSetOptions } from "./VisibleTileSet";
+import { GeoJsonDataSource } from "@here/harp-geojson-datasource";
 
 declare const process: any;
 
@@ -578,6 +586,8 @@ export class MapView extends THREE.EventDispatcher {
     private m_lastTileIds: string = "";
     private m_languages: string[] | undefined;
     private m_copyrightInfo: CopyrightInfo[] = [];
+
+    private m_userFeaturesDataSource?: GeoJsonDataSource;
 
     /**
      * Constructs a new `MapView` with the given options or canvas element.
@@ -1239,6 +1249,52 @@ export class MapView extends THREE.EventDispatcher {
      */
     get dataSources(): DataSource[] {
         return this.m_tileDataSources;
+    }
+
+    /**
+     *
+     * @param path
+     * @param options
+     */
+    createPolygon(path: PolygonPath, options?: IPolygonRenderingOptions): PolygonFeature {
+        return new PolygonFeature(path, options);
+    }
+
+    /**
+     *
+     * @param path
+     * @param options
+     */
+    createLine(path: LinePath, options?: ILineRenderingOptions): LineFeature {
+        return new LineFeature(path, options);
+    }
+
+    /**
+     * Creates a custom point on the map.
+     *
+     * @param geoCoordinates
+     * @param options
+     */
+    createPoint(geoCoordinates: GeoCoordinates, options?: IPointRenderingOptions): PointFeature {
+        return new PointFeature(geoCoordinates, options);
+    }
+
+    /**
+     * Adds a custom feature in the map.
+     *
+     * @param feature
+     */
+    addFeature(feature: IUserFeature) {
+        // Init custom feature datasource if necessary, then do the tiling stuff
+    }
+
+    /**
+     * Removes a custom feature in the map.
+     *
+     * @param feature
+     */
+    removeFeature(feature: IUserFeature) {
+        // Modify the stuff
     }
 
     /**

@@ -89,6 +89,11 @@ export interface BaseTechnique {
      * opacity and stops fading out. A value of <= 0.0 disables fading.
      */
     fadeFar?: number;
+
+    /**
+     * Phase in which the geometry should be loaded in.
+     */
+    phase?: number;
 }
 
 /**

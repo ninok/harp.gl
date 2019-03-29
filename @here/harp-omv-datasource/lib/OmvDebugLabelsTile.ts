@@ -8,6 +8,7 @@ import { DecodedTile } from "@here/harp-datasource-protocol";
 import { TileKey } from "@here/harp-geoutils/lib/tiling/TileKey";
 import { DataSource, TextElement } from "@here/harp-mapview";
 import { debugContext } from "@here/harp-mapview/lib/DebugContext";
+import { TileGeometryCreator } from "@here/harp-mapview/lib/TileGeometryCreator";
 import {
     ContextualArabicConverter,
     TextLayoutStyle,
@@ -63,7 +64,9 @@ export class OmvDebugLabelsTile extends OmvTile {
      * @param decodedTile The decoded tile.
      */
     createTextElements(decodedTile: DecodedTile) {
-        super.createTextElements(decodedTile);
+        const geometryCreator = new TileGeometryCreator();
+
+        geometryCreator.createTextElements(this, decodedTile);
 
         const colorMap = new Map<number, THREE.Color>();
         // black color for point numbers
@@ -204,14 +207,5 @@ export class OmvDebugLabelsTile extends OmvTile {
                 }
             }
         }
-    }
-
-    /**
-     * Create the geometries for the decoded [[Tile]].
-     *
-     * @param decodedTile The decoded tile.
-     */
-    createGeometries(decodedTile: DecodedTile) {
-        super.createGeometries(decodedTile);
     }
 }

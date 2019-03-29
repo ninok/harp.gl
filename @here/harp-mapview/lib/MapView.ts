@@ -27,6 +27,11 @@ import { TextElementsRenderer } from "./text/TextElementsRenderer";
 import { TextLayoutStyleCache, TextRenderStyleCache } from "./text/TextStyleCache";
 import { ThemeLoader } from "./ThemeLoader";
 import { Tile } from "./Tile";
+import {
+    PhasedTileGeometryManager,
+    SimpleTileGeometryManager,
+    TileGeometryManager
+} from "./TileGeometryManager";
 import { MapViewUtils } from "./Utils";
 import { ResourceComputationType, VisibleTileSet, VisibleTileSetOptions } from "./VisibleTileSet";
 
@@ -578,6 +583,7 @@ export class MapView extends THREE.EventDispatcher {
     private m_lastTileIds: string = "";
     private m_languages: string[] | undefined;
     private m_copyrightInfo: CopyrightInfo[] = [];
+    private m_tileGeometryManager: TileGeometryManager;
 
     /**
      * Constructs a new `MapView` with the given options or canvas element.
@@ -719,7 +725,14 @@ export class MapView extends THREE.EventDispatcher {
             mapPassAntialiasSettings
         );
 
-        this.m_visibleTiles = new VisibleTileSet(this.m_camera, this.m_visibleTileSetOptions);
+        // this.m_tileGeometryManager = new SimpleTileGeometryManager(this);
+        this.m_tileGeometryManager = new PhasedTileGeometryManager(this);
+
+        this.m_visibleTiles = new VisibleTileSet(
+            this.m_camera,
+            this.m_tileGeometryManager,
+            this.m_visibleTileSetOptions
+        );
 
         this.initTheme();
 
@@ -1448,6 +1461,13 @@ export class MapView extends THREE.EventDispatcher {
     }
 
     /**
+     * Returns `true` if the current frame will immediately be followed by another frame.
+     */
+    get isDynamicFrame(): boolean {
+        return this.cameraIsMoving || this.animating || this.m_updatePending;
+    }
+
+    /**
      * Returns the ratio between a pixel and a world unit for the current camera (in the center of
      * the camera projection).
      */
@@ -1829,7 +1849,7 @@ export class MapView extends THREE.EventDispatcher {
         ++this.m_frameNumber;
 
         const stats = PerformanceStatistics.instance;
-        const gatherStatistics: boolean = stats.enabled;
+        const gatherStatistics = stats.enabled;
 
         const frameStartTime = PerformanceTimer.now();
 
@@ -1901,7 +1921,7 @@ export class MapView extends THREE.EventDispatcher {
 
         const renderList = this.m_visibleTiles.dataSourceTileList;
 
-        renderList.forEach(({ zoomLevel, renderedTiles, visibleTiles, numTilesLoading }) => {
+        renderList.forEach(({ zoomLevel, renderedTiles, visibleTiles }) => {
             // The visible tiles may not actually be rendered, but they have to stay in the cache
             // for the next frame.
             visibleTiles.forEach(tile => {
@@ -1925,11 +1945,20 @@ export class MapView extends THREE.EventDispatcher {
             currentFrameEvent.addValue("renderCount.numTilesLoading", 0);
 
             // Increment the counters for all data sources.
-            renderList.forEach(({ zoomLevel, renderedTiles, visibleTiles, numTilesLoading }) => {
-                currentFrameEvent!.addValue("renderCount.numTilesRendered", renderedTiles.length);
-                currentFrameEvent!.addValue("renderCount.numTilesVisible", visibleTiles.length);
-                currentFrameEvent!.addValue("renderCount.numTilesLoading", numTilesLoading);
-            });
+            renderList.forEach(
+                ({ renderedTiles, visibleTiles, numTilesLoading, numTilesWithPartialGeometry }) => {
+                    currentFrameEvent!.addValue(
+                        "renderCount.numTilesRendered",
+                        renderedTiles.length
+                    );
+                    currentFrameEvent!.addValue("renderCount.numTilesVisible", visibleTiles.length);
+                    currentFrameEvent!.addValue("renderCount.numTilesLoading", numTilesLoading);
+                    currentFrameEvent!.addValue(
+                        "renderCount.numTilesWithPartialGeometry",
+                        numTilesWithPartialGeometry
+                    );
+                }
+            );
         }
 
         this.m_movementDetector.checkCameraMoved(this, time);
@@ -1946,8 +1975,12 @@ export class MapView extends THREE.EventDispatcher {
             this.m_skyBackground.update(this.m_camera);
         }
 
-        const isDynamicFrame = this.cameraIsMoving || this.animating || this.m_updatePending;
-        this.mapRenderingManager.render(this.m_renderer, this.m_scene, camera, !isDynamicFrame);
+        this.mapRenderingManager.render(
+            this.m_renderer,
+            this.m_scene,
+            camera,
+            !this.isDynamicFrame
+        );
 
         if (gatherStatistics) {
             drawTime = PerformanceTimer.now();
@@ -2110,7 +2143,11 @@ export class MapView extends THREE.EventDispatcher {
         this.m_camera.lookAt(new THREE.Vector3(0, 0, 0));
 
         this.calculateFocalLength(height);
-        this.m_visibleTiles = new VisibleTileSet(this.m_camera, this.m_visibleTileSetOptions);
+        this.m_visibleTiles = new VisibleTileSet(
+            this.m_camera,
+            this.m_tileGeometryManager,
+            this.m_visibleTileSetOptions
+        );
         // ### move & customize
         this.resize(width, height);
 

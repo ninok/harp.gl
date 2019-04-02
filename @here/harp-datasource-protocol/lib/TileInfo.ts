@@ -6,6 +6,7 @@
 import { TileKey } from "@here/harp-geoutils";
 import { assert } from "@here/harp-utils";
 
+import { InternalTechnique } from "./InternalTechnique";
 import { Technique, TextTechnique } from "./Techniques";
 import { Env, MapEnv, Value } from "./Theme";
 
@@ -242,7 +243,7 @@ export class ExtendedTileInfo implements TileInfo {
     /**
      * Catalog of techniques. Addressed by every features featureIndex.
      */
-    readonly techniqueCatalog: Technique[] = new Array<Technique>();
+    readonly techniqueCatalog: InternalTechnique[] = new Array<Technique>();
 
     /**
      * Feature group containing all infos about `POINT` features.
@@ -482,7 +483,7 @@ export class ExtendedTileInfoWriter {
      *
      * @param technique The [[Technique]] to add.
      */
-    addTechnique(technique: Technique): number {
+    addTechnique(technique: InternalTechnique): number {
         if (technique._index === undefined) {
             throw new Error(
                 "ExtendedTileInfoEmitter#processPointFeature: Internal error - No technique index"

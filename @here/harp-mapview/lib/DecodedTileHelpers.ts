@@ -19,6 +19,7 @@ import {
     toTextureDataType,
     toWrappingMode
 } from "@here/harp-datasource-protocol";
+import { InternalTechnique } from "@here/harp-datasource-protocol/lib/InternalTechnique";
 import {
     CirclePointsMaterial,
     DashedLineMaterial,
@@ -232,7 +233,7 @@ export type ObjectConstructor = new (
  * @param technique The technique.
  */
 export function getObjectConstructor(
-    technique: Technique & Partial<TechniqueId>
+    technique: InternalTechnique & Partial<TechniqueId>
 ): ObjectConstructor | undefined {
     if (technique.name === undefined) {
         return undefined;

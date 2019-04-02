@@ -7,7 +7,6 @@ import {
     BaseTechnique,
     BufferAttribute,
     DecodedTile,
-    ExtendedTileInfo,
     ExtrudedPolygonTechnique,
     FillTechnique,
     Geometry,
@@ -27,6 +26,7 @@ import {
     LineMarkerTechnique,
     PoiTechnique,
     SolidLineTechnique,
+    SquaresTechnique,
     StandardExtrudedLineTechnique,
     Technique,
     TextPathGeometry,
@@ -59,6 +59,7 @@ import {
 } from "@here/harp-utils";
 import * as THREE from "three";
 
+import { InternalTechnique } from "@here/harp-datasource-protocol/lib/InternalTechnique";
 import { ColorCache } from "./ColorCache";
 import { CopyrightInfo } from "./CopyrightInfo";
 import { DataSource } from "./DataSource";
@@ -851,7 +852,7 @@ export class Tile implements CachedResource {
 
             if (object.material !== undefined && this.shouldDisposeObjectMaterial(object)) {
                 if (object.material instanceof Array) {
-                    object.material.forEach(material => {
+                    object.material.forEach((material: { dispose: () => void } | undefined) => {
                         if (material !== undefined) {
                             material.dispose();
                         }
@@ -1244,28 +1245,45 @@ export class Tile implements CachedResource {
 
                 const bufferGeometry = new THREE.BufferGeometry();
 
-                srcGeometry.vertexAttributes.forEach(vertexAttribute => {
+                srcGeometry.vertexAttributes.forEach((vertexAttribute: BufferAttribute) => {
                     const buffer = getBufferAttribute(vertexAttribute);
                     bufferGeometry.addAttribute(vertexAttribute.name, buffer);
                 });
 
                 if (srcGeometry.interleavedVertexAttributes !== undefined) {
-                    srcGeometry.interleavedVertexAttributes.forEach(attr => {
-                        const ArrayCtor = getArrayConstructor(attr.type);
-                        const buffer = new THREE.InterleavedBuffer(
-                            new ArrayCtor(attr.buffer),
-                            attr.stride
-                        );
-                        attr.attributes.forEach(interleavedAttr => {
-                            const attribute = new THREE.InterleavedBufferAttribute(
-                                buffer,
-                                interleavedAttr.itemSize,
-                                interleavedAttr.offset,
-                                false
+                    srcGeometry.interleavedVertexAttributes.forEach(
+                        (attr: {
+                            type: any;
+                            buffer: any;
+                            stride: any;
+                            attributes: {
+                                forEach: (
+                                    arg0: (interleavedAttr: {
+                                        itemSize: any;
+                                        offset: any;
+                                        name: any;
+                                    }) => void
+                                ) => void;
+                            };
+                        }) => {
+                            const ArrayCtor = getArrayConstructor(attr.type);
+                            const buffer = new THREE.InterleavedBuffer(
+                                new ArrayCtor(attr.buffer),
+                                attr.stride
                             );
-                            bufferGeometry.addAttribute(interleavedAttr.name, attribute);
-                        });
-                    });
+                            attr.attributes.forEach(
+                                (interleavedAttr: { itemSize: any; offset: any; name: any }) => {
+                                    const attribute = new THREE.InterleavedBufferAttribute(
+                                        buffer,
+                                        interleavedAttr.itemSize,
+                                        interleavedAttr.offset,
+                                        false
+                                    );
+                                    bufferGeometry.addAttribute(interleavedAttr.name, attribute);
+                                }
+                            );
+                        }
+                    );
                 }
 
                 if (srcGeometry.index) {
@@ -1294,7 +1312,6 @@ export class Tile implements CachedResource {
                         lineMaterial.defines.TILE_CLIP = 1;
                     }
                 }
-
                 // Add polygon offset to the extruded buildings and to the fill area to avoid depth
                 // problems when rendering edges.
                 const hasExtrudedOutlines: boolean =
@@ -1321,7 +1338,7 @@ export class Tile implements CachedResource {
                     if (technique._renderOrderAuto === undefined) {
                         throw new Error("Technique has no renderOrderAuto");
                     }
-                    object.renderOrder = technique._renderOrderAuto;
+                    object.renderOrder = (technique as InternalTechnique)._renderOrderAuto!;
                 }
 
                 if (group.renderOrderOffset !== undefined) {
@@ -1334,9 +1351,10 @@ export class Tile implements CachedResource {
 
                 if (
                     (isCirclesTechnique(technique) || isSquaresTechnique(technique)) &&
-                    technique.enablePicking !== undefined
+                    (technique as SquaresTechnique).enablePicking !== undefined
                 ) {
-                    (object as MapViewPoints).enableRayTesting = technique.enablePicking;
+                    // tslint:disable-next-line:max-line-length
+                    (object as MapViewPoints).enableRayTesting = (technique as SquaresTechnique).enablePicking!;
                 }
 
                 // Lines renderOrder fix: Render them as transparent objects, but make sure they end
@@ -1533,10 +1551,11 @@ export class Tile implements CachedResource {
                     if (outlineTechnique.secondaryRenderOrder !== undefined) {
                         outlineObj.renderOrder = outlineTechnique.secondaryRenderOrder;
                     } else {
-                        if (technique._renderOrderAuto === undefined) {
+                        if ((technique as InternalTechnique)._renderOrderAuto === undefined) {
                             throw new Error("Technique has no renderOrderAuto");
                         }
-                        outlineObj.renderOrder = technique._renderOrderAuto - 0.0000001;
+                        outlineObj.renderOrder =
+                            (technique as InternalTechnique)._renderOrderAuto! - 0.0000001;
                     }
                     if (group.renderOrderOffset !== undefined) {
                         outlineObj.renderOrder += group.renderOrderOffset;

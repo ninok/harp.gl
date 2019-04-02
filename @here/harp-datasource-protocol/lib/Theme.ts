@@ -26,6 +26,8 @@ import {
     TextTechnique
 } from "./Techniques";
 
+import { InternalTechnique } from "./InternalTechnique";
+
 export { Env, MapEnv, Value, ValueMap } from "./Expr";
 
 /**
@@ -42,16 +44,57 @@ export interface Theme {
      * Actual URL the theme has been loaded from.
      */
     url?: string;
+
+    /**
+     * Color to be used as a clear background - no map objects.
+     */
     clearColor?: string;
+
+    /**
+     * Define the default text style for styling labels and texts.
+     */
     defaultTextStyle?: TextStyle;
+
+    /**
+     * Define the lightning available on the three.js scene.
+     */
     lights?: Light[];
+
+    /**
+     * Define the style of the sky presented in the map scene.
+     */
     sky?: Sky;
+
+    /**
+     * Define the fog used in the map scene.
+     */
     fog?: Fog;
+
+    /**
+     * Map styles available for datasources used to render the map.
+     */
     styles?: Styles;
+
+    /**
+     * Define the style to render different types of text used on the map.
+     */
     textStyles?: TextStyle[];
+
+    /**
+     * List available fonts to be used while rendering text.
+     */
     fontCatalogs?: FontCatalogConfig[];
+
+    /**
+     * Optional images to be rendered on the map view.
+     */
     images?: ImageDefinitions;
+
+    /**
+     * Image textures to be used while rendering geometries on the map view.
+     */
     imageTextures?: ImageTexture[];
+
     /**
      * Optional list of [[ThemePoiTableDef]]s.
      */
@@ -170,89 +213,89 @@ export type Style =
 
 export interface SquaresStyle extends BaseStyle {
     technique: "squares";
-    attr?: Partial<SquaresTechnique>;
+    attr?: Partial<SquaresTechnique & InternalTechnique>;
 }
 
 export interface CirclesStyle extends BaseStyle {
     technique: "circles";
-    attr?: Partial<CirclesTechnique>;
+    attr?: Partial<CirclesTechnique & InternalTechnique>;
 }
 
 export interface PoiStyle extends BaseStyle {
     technique: "labeled-icon";
-    attr?: Partial<PoiTechnique>;
+    attr?: Partial<PoiTechnique & InternalTechnique>;
 }
 
 export interface LineMarkerStyle extends BaseStyle {
     technique: "line-marker";
-    attr?: Partial<LineMarkerTechnique>;
+    attr?: Partial<LineMarkerTechnique & InternalTechnique>;
 }
 
 export interface LineStyle extends BaseStyle {
     technique: "line";
-    attr?: Partial<LineTechnique>;
+    attr?: Partial<LineTechnique & InternalTechnique>;
 }
 
 export interface SegmentsStyle extends BaseStyle {
     technique: "segments";
-    attr?: Partial<SegmentsTechnique>;
+    attr?: Partial<SegmentsTechnique & InternalTechnique>;
 }
 
 export interface SolidLineStyle extends BaseStyle {
     technique: "solid-line";
-    attr?: Partial<SolidLineTechnique>;
+    attr?: Partial<SolidLineTechnique & InternalTechnique>;
 }
 
 export interface DashedLineStyle extends BaseStyle {
     technique: "dashed-line";
-    attr?: Partial<DashedLineTechnique>;
+    attr?: Partial<DashedLineTechnique & InternalTechnique>;
 }
 
 export interface FillStyle extends BaseStyle {
     technique: "fill";
-    attr?: Partial<FillTechnique>;
+    attr?: Partial<FillTechnique & InternalTechnique>;
 }
 
 export interface StandardStyle extends BaseStyle {
     technique: "standard";
-    attr?: Partial<StandardTechnique>;
+    attr?: Partial<StandardTechnique & InternalTechnique>;
 }
 
 export interface StandardTexturedStyle extends BaseStyle {
     technique: "standard-textured";
-    attr?: Partial<StandardTexturedTechnique>;
+    attr?: Partial<StandardTexturedTechnique & InternalTechnique>;
 }
 
 export interface BasicExtrudedLineStyle extends BaseStyle {
     technique: "extruded-line";
     shading?: "basic";
-    attr?: Partial<BasicExtrudedLineTechnique>;
+    attr?: Partial<BasicExtrudedLineTechnique & InternalTechnique>;
 }
 
 export interface StandardExtrudedLineStyle extends BaseStyle {
     technique: "extruded-line";
     shading: "standard";
-    attr?: Partial<StandardExtrudedLineTechnique>;
+    attr?: Partial<StandardExtrudedLineTechnique & InternalTechnique>;
 }
 
 export interface ExtrudedPolygonStyle extends BaseStyle {
     technique: "extruded-polygon";
-    attr?: Partial<ExtrudedPolygonTechnique>;
+    attr?: Partial<ExtrudedPolygonTechnique & InternalTechnique>;
 }
 
 export interface ShaderStyle extends BaseStyle {
     technique: "shader";
-    attr?: Partial<ShaderTechnique>;
+    attr?: Partial<ShaderTechnique & InternalTechnique>;
 }
 
 export interface LandmarkStyle extends BaseStyle {
     technique: "landmark";
-    attr?: Partial<LandmarkTechnique>;
+    attr?: Partial<LandmarkTechnique & InternalTechnique>;
 }
 
 export interface TechniqueTextStyle extends BaseStyle {
     technique: "text";
-    attr?: Partial<TextTechnique>;
+    attr?: Partial<TextTechnique & InternalTechnique>;
 }
 
 export interface NoneStyle extends BaseStyle {
@@ -455,12 +498,26 @@ export interface FontCatalogConfig {
     name: string;
 }
 
+/**
+ * Interpolated property could have its value (some initial value should be provided) changed
+ * according to an interpolation type.
+ * Here is an example of an interpolated property from a map style:
+ * "lineWidth": {
+ *  "interpolation": "Linear",
+ *  "zoomLevels": [13, 14, 15],
+ *  "values": [ 1.5, 1.2, 0.9]
+ * }
+ */
 export interface InterpolatedPropertyDefinition<T> {
     interpolation?: "Discrete" | "Linear" | "Cubic";
     zoomLevels: number[];
     values: T[];
 }
 
+/**
+ * Checks if a property is interpolated.
+ * @param p property to be checked
+ */
 export function isInterpolatedPropertyDefinition<T>(
     p: any
 ): p is InterpolatedPropertyDefinition<T> {

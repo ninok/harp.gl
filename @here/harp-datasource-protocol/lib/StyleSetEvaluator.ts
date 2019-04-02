@@ -24,6 +24,7 @@ import { LoggerManager, MathUtils } from "@here/harp-utils";
 import { Expr, MapEnv } from "./Expr";
 
 import { CubicInterpolant, DiscreteInterpolant, LinearInterpolant } from "three";
+import { InternalTechnique } from "./InternalTechnique";
 
 export const logger = LoggerManager.instance.create("Theme");
 
@@ -169,8 +170,8 @@ export class StyleSetEvaluator {
      * @param env The objects environment, i.e. the attributes that are relevant for its
      * representation.
      */
-    getMatchingTechniques(env: MapEnv): Technique[] {
-        const result: Technique[] = [];
+    getMatchingTechniques(env: MapEnv): InternalTechnique[] {
+        const result: InternalTechnique[] = [];
         const styleStack = new Array<Style>();
         for (const currStyle of this.styleSet) {
             if (this.validate && styleStack.length !== 0) {
@@ -189,7 +190,7 @@ export class StyleSetEvaluator {
      * @param style Style that defines technique
      * @param technique Technique to add
      */
-    private checkAddTechnique(style: Style, technique: Technique): number {
+    private checkAddTechnique(style: Style, technique: InternalTechnique): number {
         let index = style._index === undefined ? -1 : style._index;
         if (index < 0) {
             technique._index = index = this.m_techniques.length;

@@ -10,7 +10,7 @@ import {
     sphereProjection,
     webMercatorProjection
 } from "@here/harp-geoutils";
-import { Technique } from "./Techniques";
+import { InternalTechnique } from "./InternalTechnique";
 import { TileInfo } from "./TileInfo";
 
 /**
@@ -19,7 +19,7 @@ import { TileInfo } from "./TileInfo";
  * metadata describing these buffers.
  */
 export interface DecodedTile {
-    techniques: Technique[];
+    techniques: InternalTechnique[];
     geometries: Geometry[];
     textPathGeometries?: TextPathGeometry[];
     textGeometries?: TextGeometry[]; // ### deprecate

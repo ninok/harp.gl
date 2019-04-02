@@ -45,6 +45,7 @@ import { assert, LoggerManager, Math2D } from "@here/harp-utils";
 import earcut from "earcut";
 import * as THREE from "three";
 
+import { InternalTechnique } from "@here/harp-datasource-protocol/lib/InternalTechnique";
 import { GeoCoordinates, identityProjection } from "@here/harp-geoutils";
 import { ILineGeometry, IPolygonGeometry } from "./IGeometryProcessor";
 import { LinesGeometry } from "./OmvDataSource";
@@ -155,7 +156,7 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
         layer: string,
         geometry: GeoCoordinates[],
         env: MapEnv,
-        techniques: Technique[],
+        techniques: InternalTechnique[],
         featureId: number | undefined
     ): void {
         this.processFeatureCommon(env);
@@ -268,7 +269,7 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
         layer: string,
         geometry: ILineGeometry[],
         env: MapEnv,
-        techniques: Technique[],
+        techniques: InternalTechnique[],
         featureId: number | undefined
     ): void {
         this.processFeatureCommon(env);
@@ -296,7 +297,7 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
 
         function applyLineTechnique(
             linesGeometry: LinesGeometry[],
-            technique: Technique,
+            technique: InternalTechnique,
             techniqueIndex: number,
             gatherFeatureIds: boolean,
             lineType = LineType.Complex
@@ -560,7 +561,7 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
         layer: string,
         geometry: IPolygonGeometry[],
         env: MapEnv,
-        techniques: Technique[],
+        techniques: InternalTechnique[],
         featureId: number | undefined
     ): void {
         this.processFeatureCommon(env);

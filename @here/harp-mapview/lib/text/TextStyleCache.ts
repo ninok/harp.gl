@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Technique } from "@here/harp-datasource-protocol";
+import { InternalTechnique } from "@here/harp-datasource-protocol/lib/InternalTechnique";
 import {
     FontUnit,
     HorizontalAlignment,
@@ -37,7 +37,7 @@ export const DEFAULT_TEXT_STYLE_CACHE_ID = "Default";
  */
 export function computeStyleCacheId(
     datasourceName: string,
-    technique: Technique,
+    technique: InternalTechnique,
     zoomLevel: number
 ): string {
     return `${datasourceName}_${technique._renderOrderAuto!}_${zoomLevel}`;

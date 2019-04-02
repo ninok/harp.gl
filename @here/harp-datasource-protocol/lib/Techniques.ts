@@ -32,6 +32,7 @@ export type Technique =
 
 /**
  * Techniques are used to specify how a geometry is drawn on the canvas.
+ *
  */
 export interface BaseTechnique {
     /**
@@ -64,19 +65,6 @@ export interface BaseTechnique {
      * Optional. If `true`, no IDs will be saved for the geometry this technique creates.
      */
     transient?: boolean;
-
-    /**
-     * Automatically assigned default render order. Automatic renderOrders are in ascending order
-     * from the top of the theme to the bottom. Only assigned if renderOrder is not used.
-     * @hidden
-     */
-    _renderOrderAuto?: number;
-
-    /**
-     * Optimization: Index into table in StyleSetEvaluator.
-     * @hidden
-     */
-    _index?: number;
 
     /**
      * Distance to the camera (0.0 = camera position, 1.0 = farPlane) at which the object start
@@ -880,7 +868,7 @@ export type LandmarkTechnique = BaseStandardTechnique;
 /**
  * Technique used to render a geometry with a texture.
  * When using this technique, the datasource will produce texture coordinates in
- * local tile space (i.e. [0,0] at south-west and [1,1] at noth-east tile corner )
+ * local tile space (i.e. [0,0] at south-west and [1,1] at north-east tile corner )
  */
 export interface StandardTexturedTechnique extends BaseStandardTechnique {
     /**
@@ -1038,6 +1026,9 @@ export interface TextTechnique extends BaseTechnique {
     textLabel?: string;
 }
 
+/**
+ * Identify each technique by their distinctive name.
+ */
 export interface TechniqueId {
     name:
         | "none"

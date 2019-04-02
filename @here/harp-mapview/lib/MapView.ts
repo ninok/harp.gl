@@ -8,18 +8,32 @@ import {
     ImageTexture,
     Light,
     Sky,
-    Theme,
-    PolygonFeatureGroup
+    StyleSet,
+    Theme
 } from "@here/harp-datasource-protocol";
 import { GeoCoordinates, MathUtils, mercatorProjection, Projection } from "@here/harp-geoutils";
 import { assert, LoggerManager, PerformanceTimer } from "@here/harp-utils";
 import * as THREE from "three";
 
+import { OmvDataSource } from "@here/harp-omv-datasource";
+import { GeoJsonDataProvider } from "../../harp-geojson-datasource";
 import { CameraMovementDetector } from "./CameraMovementDetector";
 import { IMapAntialiasSettings, IMapRenderingManager, MapRenderingManager } from "./composing";
 import { ConcurrentDecoderFacade } from "./ConcurrentDecoderFacade";
 import { CopyrightInfo } from "./CopyrightInfo";
 import { DataSource } from "./DataSource";
+import {
+    IFeature,
+    ILineRenderingOptions,
+    IPointRenderingOptions,
+    IPolygonRenderingOptions,
+    LineFeature,
+    LinePath,
+    PointCoords,
+    PointFeature,
+    PolygonFeature,
+    PolygonPath
+} from "./Features";
 import { MapViewImageCache } from "./image/MapViewImageCache";
 import { MapViewFog } from "./MapViewFog";
 import { PickHandler, PickResult } from "./PickHandler";
@@ -36,7 +50,6 @@ import { ThemeLoader } from "./ThemeLoader";
 import { Tile } from "./Tile";
 import { MapViewUtils } from "./Utils";
 import { ResourceComputationType, VisibleTileSet, VisibleTileSetOptions } from "./VisibleTileSet";
-import { GeoJsonDataSource } from "@here/harp-geojson-datasource";
 
 declare const process: any;
 
@@ -93,6 +106,11 @@ const DEFAULT_MAX_ZOOM_LEVEL = 20;
  * Default minimum camera height.
  */
 const DEFAULT_MIN_CAMERA_HEIGHT = 20;
+
+/**
+ * Name used internally to identify the [[StyleSet]] and name the [[DataSource]] for user features.
+ */
+const USER_FEATURES_GENERIC_IDENTIFIER = "user"; // Do not use dashes.
 
 /**
  * The type of `RenderEvent`.
@@ -587,7 +605,14 @@ export class MapView extends THREE.EventDispatcher {
     private m_languages: string[] | undefined;
     private m_copyrightInfo: CopyrightInfo[] = [];
 
-    private m_userFeaturesDataSource?: GeoJsonDataSource;
+    private m_userFeaturesDataSource?: OmvDataSource;
+    private m_userFeaturesGeoJson: { features: any[]; type: "FeatureCollection" } = {
+        type: "FeatureCollection",
+        features: []
+    };
+    private m_userFeaturesBlob?: Blob;
+    private m_userFeaturesDataURL?: string;
+    private m_userFeaturesStyleSet: StyleSet = [];
 
     /**
      * Constructs a new `MapView` with the given options or canvas element.
@@ -1275,7 +1300,7 @@ export class MapView extends THREE.EventDispatcher {
      * @param geoCoordinates
      * @param options
      */
-    createPoint(geoCoordinates: GeoCoordinates, options?: IPointRenderingOptions): PointFeature {
+    createPoint(geoCoordinates: PointCoords, options?: IPointRenderingOptions): PointFeature {
         return new PointFeature(geoCoordinates, options);
     }
 
@@ -1284,8 +1309,64 @@ export class MapView extends THREE.EventDispatcher {
      *
      * @param feature
      */
-    addFeature(feature: IUserFeature) {
-        // Init custom feature datasource if necessary, then do the tiling stuff
+    addFeature(feature: PolygonFeature) {
+        // Return if the feature is already displayed.
+        for (const object of this.m_userFeaturesGeoJson.features) {
+            if (object.properties !== undefined && object.properties.uuid === feature.uuid) {
+                return;
+            }
+        }
+
+        // Create a style for this specific feature and push it.
+        let featureStyle;
+        if (feature.type.includes("Polygon")) {
+            featureStyle = {
+                when: `$geometryType == 'polygon' && properties.uuid == '${feature.uuid}'`,
+                technique: "fill",
+                renderOrder: 2000,
+                attr: {
+                    color: feature.color
+                }
+            };
+        } else if (feature.type.includes("LineString")) {
+            featureStyle = {
+                when: `$geometryType == 'line' && properties.uuid == '${feature.uuid}'`,
+                technique: "solid-line",
+                renderOrder: 2000,
+                attr: {
+                    color: feature.color,
+                    metricUnit: "Pixel",
+                    lineWidth: 5
+                }
+            };
+        } else {
+            featureStyle = {
+                when: `$geometryType == 'point' && properties.uuid == '${feature.uuid}'`,
+                technique: "circles",
+                renderOrder: 2000,
+                attr: {
+                    size: 10,
+                    depthTest: false,
+
+                    color: feature.color
+                }
+            };
+        }
+        this.m_userFeaturesStyleSet.push(featureStyle);
+
+        // Create a GeoJson feature from the feature coordinates and push it.
+        const geojsonFeature = {
+            type: "Feature",
+            geometry: {
+                type: feature.type,
+                coordinates: [feature.coordinates]
+            },
+            properties: {
+                uuid: feature.uuid
+            }
+        };
+        this.m_userFeaturesGeoJson.features.push(geojsonFeature);
+        this.updateUserFeatures();
     }
 
     /**
@@ -1293,8 +1374,41 @@ export class MapView extends THREE.EventDispatcher {
      *
      * @param feature
      */
-    removeFeature(feature: IUserFeature) {
-        // Modify the stuff
+    removeFeature(feature: IFeature) {
+        const features = this.m_userFeaturesGeoJson.features;
+        let featureIndex;
+        for (let i = 0; i < features.length; i++) {
+            if (
+                features[i].properties !== undefined &&
+                features[i].properties.uuid === feature.uuid
+            ) {
+                featureIndex = i;
+                break;
+            }
+        }
+        if (featureIndex === undefined) {
+            return;
+        }
+        features.slice(featureIndex, 1);
+        for (let i = 0; i < this.m_userFeaturesStyleSet.length; i++) {
+            if (this.m_userFeaturesStyleSet[i].when.includes(feature.uuid)) {
+                this.m_userFeaturesStyleSet.slice(i, 1);
+                break;
+            }
+        }
+        this.updateUserFeatures();
+    }
+
+    /**
+     * Removes all the custom features.
+     */
+    clearFeatures() {
+        this.m_userFeaturesGeoJson = {
+            type: "FeatureCollection",
+            features: []
+        };
+        this.m_userFeaturesStyleSet = [];
+        this.updateUserFeatures();
     }
 
     /**
@@ -1771,6 +1885,47 @@ export class MapView extends THREE.EventDispatcher {
      */
     get fog(): MapViewFog {
         return this.m_fog;
+    }
+
+    private updateUserFeatures() {
+        // Clear previous objects if any.
+        if (this.m_userFeaturesDataURL !== undefined) {
+            URL.revokeObjectURL(this.m_userFeaturesDataURL);
+        }
+
+        // If there is no feature to display, remove the datasource and return.
+        if (
+            this.m_userFeaturesGeoJson.features.length === 0 &&
+            this.m_userFeaturesDataSource !== undefined
+        ) {
+            this.removeDataSource(this.m_userFeaturesDataSource);
+            return;
+        }
+
+        // Update the blob, the objectURL, and pass the new URL to the data provider.
+        this.m_userFeaturesBlob = new Blob([JSON.stringify(this.m_userFeaturesGeoJson)], {
+            type: "application/json"
+        });
+        this.m_userFeaturesDataURL = URL.createObjectURL(this.m_userFeaturesBlob);
+        const url = new URL(this.m_userFeaturesDataURL);
+
+        // Update the data provider, create the datasource if needed.
+        if (this.m_userFeaturesDataSource === undefined) {
+            this.m_userFeaturesDataSource = new OmvDataSource({
+                name: USER_FEATURES_GENERIC_IDENTIFIER,
+                styleSetName: USER_FEATURES_GENERIC_IDENTIFIER,
+                dataProvider: new GeoJsonDataProvider(USER_FEATURES_GENERIC_IDENTIFIER, url)
+            });
+            this.addDataSource(this.m_userFeaturesDataSource).then(() => {
+                if (this.m_userFeaturesDataSource !== undefined) {
+                    this.m_userFeaturesDataSource.setStyleSet(this.m_userFeaturesStyleSet);
+                }
+            });
+        } else {
+            this.m_userFeaturesDataSource.dataProvider = () =>
+                new GeoJsonDataProvider(USER_FEATURES_GENERIC_IDENTIFIER, url);
+            this.m_userFeaturesDataSource.setStyleSet(this.m_userFeaturesStyleSet);
+        }
     }
 
     /**

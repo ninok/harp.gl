@@ -12,7 +12,7 @@
  * <pre>
  * {
  *     dataSource: "geojson",
- *     when: "type == 'polygon' && <strong>featureClass == 'land'</strong>",
+ *     when: "$geometryType == 'polygon' && <strong>featureClass == 'land'</strong>",
  *     continue: true,
  *     technique: {
  *         name: "fill",

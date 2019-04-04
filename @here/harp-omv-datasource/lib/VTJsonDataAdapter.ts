@@ -150,7 +150,7 @@ export class VTJsonDataAdapter implements OmvDataAdapter {
                         let maxY = 0;
 
                         const ring: IRing = { coordinates: [], outlines: [] };
-                        for (let coordIdx = 0; coordIdx < outline.length; ++coordIdx) {
+                        for (let coordIdx = 0; coordIdx < outline.length - 1; ++coordIdx) {
                             const currX = outline[coordIdx][0];
                             const currY = outline[coordIdx][1];
                             const nextX = outline[(coordIdx + 1) % outline.length][0];
